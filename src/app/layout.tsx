@@ -17,17 +17,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://hypexchange.space"),
   title: {
-    default: "HypeXchange: fictional shares of internet products",
-    template: "%s | HypeXchange",
+    default: "HypeXchange - Fictional internet stock market",
+    template: "%s - HypeXchange",
   },
   description:
     "HypeXchange is an entertainment game where you trade fictional shares of internet products with IXD. There is no real money and no real equity.",
   icons: {
-    icon: "/favicon.png",
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png" }],
   },
   openGraph: {
-    title: "HypeXchange: fictional shares of internet products",
+    title: "HypeXchange - Fictional internet stock market",
     description:
       "A fictional market for internet products, traded with IXD for entertainment.",
     url: "https://hypexchange.space",

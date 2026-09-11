@@ -9,6 +9,7 @@ const EXPLORE = [
   { href: "/market", label: "Market" },
   { href: "/ipos", label: "IPOs" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/founders", label: "For founders" },
 ] as const;
 
 const ACCOUNT = [

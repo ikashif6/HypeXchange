@@ -123,6 +123,13 @@ export function Header() {
               <Search className="size-4" />
             </button>
 
+            <Link
+              href="/founders"
+              className="hidden h-9 shrink-0 items-center rounded-[9px] border border-hx-border bg-hx-card px-3 text-xs font-medium text-hx-text hover:bg-hx-bg sm:inline-flex"
+            >
+              Visit founders page
+            </Link>
+
             <span className="hidden md:inline-flex">
               <ThemeToggle variant="icon" />
             </span>
@@ -311,6 +318,14 @@ export function Header() {
               </p>
               <ThemeToggle variant="segmented" className="w-full justify-stretch [&>button]:flex-1" />
             </div>
+
+            <Link
+              href="/founders"
+              onClick={() => setMenuOpen(false)}
+              className="inline-flex h-10 w-full items-center justify-center rounded-[9px] border border-hx-border bg-hx-card text-sm font-medium text-hx-text hover:bg-hx-bg"
+            >
+              Visit founders page
+            </Link>
 
             {status !== "authenticated" ? (
               <Link

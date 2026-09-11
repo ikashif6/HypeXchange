@@ -16,6 +16,7 @@ import { MarketLeaders } from "@/components/market/market-leaders";
 import { MarketTable } from "@/components/market/market-table";
 import { TopList } from "@/components/market/top-list";
 import { ActivityStrip } from "@/components/market/activity-strip";
+import { SponsorSlot } from "@/components/marketing/sponsor-slot";
 import { BalanceCard } from "@/components/portfolio/balance-card";
 import { PriceChart } from "@/components/charts/price-chart";
 import { ProductLogo } from "@/components/product/product-logo";
@@ -93,6 +94,8 @@ export default async function DashboardPage() {
       {isLoggedIn && user && !user.welcomeSeen ? (
         <WelcomeBanner displayName={user.displayName ?? user.username} />
       ) : null}
+
+      <SponsorSlot />
 
       <ActivityStrip trades={snapshot.recentActivity} />
 
