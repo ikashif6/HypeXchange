@@ -3,7 +3,8 @@ import { connectMongo } from "@/lib/mongodb/mongoose";
 import { resolveAvatarUrl } from "@/lib/avatar";
 import { fromDecimal128, toNumberSafe } from "@/lib/formatting/mongo-decimal";
 import {
-  computePriceChangePct,
+  batchAnchorPrices,
+  changePctFromAnchor,
   fallbackChangePct,
   lookbackDate,
 } from "@/lib/market/changes";
@@ -44,35 +45,34 @@ function approxChangePct(product: LeanProduct): number {
 async function withChanges(
   products: LeanProduct[],
 ): Promise<ProductPublic[]> {
+  if (products.length === 0) return [];
+
+  const ids = products.map((p) => p._id);
   const since24h = lookbackDate("24h");
   const since7d = lookbackDate("7d");
 
-  return Promise.all(
-    products.map(async (product) => {
-      const current = num(product.currentPrice);
-      const starting = num(product.startingPrice);
-      const [change24h, change7d] = await Promise.all([
-        computePriceChangePct(product._id, current, starting, since24h),
-        computePriceChangePct(product._id, current, starting, since7d),
-      ]);
-      return serializeProduct(product, { change24h, change7d });
-    }),
-  );
+  const [anchors24h, anchors7d] = await Promise.all([
+    batchAnchorPrices(ids, since24h),
+    batchAnchorPrices(ids, since7d),
+  ]);
+
+  return products.map((product) => {
+    const current = num(product.currentPrice);
+    const starting = num(product.startingPrice);
+    const id = product._id.toString();
+    return serializeProduct(product, {
+      change24h: changePctFromAnchor(current, starting, anchors24h.get(id)),
+      change7d: changePctFromAnchor(current, starting, anchors7d.get(id)),
+    });
+  });
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductPublic | null> {
   await connectMongo();
   const product = await Product.findOne({ slug: slug.toLowerCase() }).lean<LeanProduct>();
   if (!product) return null;
-
-  const current = num(product.currentPrice);
-  const starting = num(product.startingPrice);
-  const [change24h, change7d] = await Promise.all([
-    computePriceChangePct(product._id, current, starting, lookbackDate("24h")),
-    computePriceChangePct(product._id, current, starting, lookbackDate("7d")),
-  ]);
-
-  return serializeProduct(product, { change24h, change7d });
+  const [serialized] = await withChanges([product]);
+  return serialized ?? null;
 }
 
 export async function getMarketProducts(options: {
@@ -127,6 +127,25 @@ export async function getMarketProducts(options: {
     const [total, rows] = await Promise.all([
       Product.countDocuments(filter),
       Product.find(filter)
+        .select({
+          name: 1,
+          ticker: 1,
+          slug: 1,
+          domain: 1,
+          description: 1,
+          category: 1,
+          logoUrl: 1,
+          verified: 1,
+          status: 1,
+          currentPrice: 1,
+          startingPrice: 1,
+          volume24h: 1,
+          holdersCount: 1,
+          allTimeHigh: 1,
+          listedAt: 1,
+          cashReserve: 1,
+          shareReserve: 1,
+        })
         .sort(sortSpec)
         .skip((page - 1) * pageSize)
         .limit(pageSize)
@@ -145,7 +164,27 @@ export async function getMarketProducts(options: {
 
   // Gainers / losers: approximate change from startingPrice for MVP sort,
   // then attach real change fields from history when available.
-  const all = await Product.find(filter).lean<LeanProduct[]>();
+  const all = await Product.find(filter)
+    .select({
+      name: 1,
+      ticker: 1,
+      slug: 1,
+      domain: 1,
+      description: 1,
+      category: 1,
+      logoUrl: 1,
+      verified: 1,
+      status: 1,
+      currentPrice: 1,
+      startingPrice: 1,
+      volume24h: 1,
+      holdersCount: 1,
+      allTimeHigh: 1,
+      listedAt: 1,
+      cashReserve: 1,
+      shareReserve: 1,
+    })
+    .lean<LeanProduct[]>();
   const enriched = all.map((product) => {
     const changePct = approxChangePct(product);
     return { product, changePct };
@@ -179,16 +218,43 @@ export async function getTopMovers(
 ): Promise<ProductPublic[]> {
   await connectMongo();
   const since = lookbackDate(period);
-  const products = await Product.find({ status: "active" }).lean<LeanProduct[]>();
+  const products = await Product.find({ status: "active" })
+    .select({
+      name: 1,
+      ticker: 1,
+      slug: 1,
+      domain: 1,
+      description: 1,
+      category: 1,
+      logoUrl: 1,
+      verified: 1,
+      status: 1,
+      currentPrice: 1,
+      startingPrice: 1,
+      volume24h: 1,
+      holdersCount: 1,
+      allTimeHigh: 1,
+      listedAt: 1,
+      cashReserve: 1,
+      shareReserve: 1,
+    })
+    .lean<LeanProduct[]>();
 
-  const scored = await Promise.all(
-    products.map(async (product) => {
-      const current = num(product.currentPrice);
-      const starting = num(product.startingPrice);
-      const change = await computePriceChangePct(product._id, current, starting, since);
-      return { product, change };
-    }),
+  const anchors = await batchAnchorPrices(
+    products.map((p) => p._id),
+    since,
   );
+
+  const scored = products.map((product) => {
+    const current = num(product.currentPrice);
+    const starting = num(product.startingPrice);
+    const change = changePctFromAnchor(
+      current,
+      starting,
+      anchors.get(product._id.toString()),
+    );
+    return { product, change };
+  });
 
   scored.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
 
@@ -325,7 +391,31 @@ export async function getDashboardSnapshot(): Promise<{
 }> {
   await connectMongo();
 
-  const active = await Product.find({ status: "active" }).lean<LeanProduct[]>();
+  const [active, recentActivity] = await Promise.all([
+    Product.find({ status: "active" })
+      .select({
+        name: 1,
+        ticker: 1,
+        slug: 1,
+        domain: 1,
+        description: 1,
+        category: 1,
+        logoUrl: 1,
+        verified: 1,
+        status: 1,
+        currentPrice: 1,
+        startingPrice: 1,
+        volume24h: 1,
+        holdersCount: 1,
+        allTimeHigh: 1,
+        listedAt: 1,
+        cashReserve: 1,
+        shareReserve: 1,
+      })
+      .lean<LeanProduct[]>(),
+    getRecentTrades(12),
+  ]);
+
   const withPct = active.map((product) => ({
     product,
     changePct: approxChangePct(product),
@@ -339,45 +429,37 @@ export async function getDashboardSnapshot(): Promise<{
   const gainers = [...withPct].sort((a, b) => b.changePct - a.changePct);
   const losers = [...withPct].sort((a, b) => a.changePct - b.changePct);
 
-  const serializeSlice = async (
-    rows: typeof withPct,
-    limit: number,
-  ): Promise<ProductPublic[]> => {
-    const slice = rows.slice(0, limit);
-    return Promise.all(
-      slice.map(async ({ product, changePct }) => {
-        const current = num(product.currentPrice);
-        const starting = num(product.startingPrice);
-        const change7d = await computePriceChangePct(
-          product._id,
-          current,
-          starting,
-          lookbackDate("7d"),
-        );
-        return serializeProduct(product, {
-          change24h: changePct,
-          change7d,
-        });
-      }),
-    );
-  };
+  const featuredRows = byVolume.slice(0, 4);
+  const topRows = byVolume.slice(0, 8);
+  const gainerRows = gainers.slice(0, 5);
+  const loserRows = losers.slice(0, 5);
+  const leaderRows = byCap.slice(0, 5);
 
-  const [featured, topProducts, topGainers, topLosers, marketLeaders, recentActivity] =
-    await Promise.all([
-      serializeSlice(byVolume, 4),
-      serializeSlice(byVolume, 8),
-      serializeSlice(gainers, 5),
-      serializeSlice(losers, 5),
-      serializeSlice(byCap, 5),
-      getRecentTrades(12),
-    ]);
+  const unique = new Map<string, LeanProduct>();
+  for (const row of [
+    ...featuredRows,
+    ...topRows,
+    ...gainerRows,
+    ...loserRows,
+    ...leaderRows,
+  ]) {
+    unique.set(row.product._id.toString(), row.product);
+  }
+
+  const serialized = await withChanges([...unique.values()]);
+  const byId = new Map(serialized.map((p) => [p.id, p]));
+
+  const pick = (rows: typeof withPct) =>
+    rows
+      .map((r) => byId.get(r.product._id.toString()))
+      .filter((p): p is ProductPublic => Boolean(p));
 
   return {
-    featured,
-    topProducts,
-    topGainers,
-    topLosers,
-    marketLeaders,
+    featured: pick(featuredRows),
+    topProducts: pick(topRows),
+    topGainers: pick(gainerRows),
+    topLosers: pick(loserRows),
+    marketLeaders: pick(leaderRows),
     recentActivity,
   };
 }

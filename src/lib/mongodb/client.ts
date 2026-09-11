@@ -6,6 +6,8 @@ declare global {
 }
 
 const options = {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5_000,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -19,16 +21,12 @@ function getClientPromise(): Promise<MongoClient> {
     return Promise.reject(new Error("Missing MONGODB_URI environment variable"));
   }
 
-  if (process.env.NODE_ENV === "development") {
-    if (!global._mongoClientPromise) {
-      const client = new MongoClient(uri, options);
-      global._mongoClientPromise = client.connect();
-    }
-    return global._mongoClientPromise;
+  // Reuse one client across hot serverless invocations (dev + prod).
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
   }
-
-  const client = new MongoClient(uri, options);
-  return client.connect();
+  return global._mongoClientPromise;
 }
 
 const clientPromise = new Proxy({} as Promise<MongoClient>, {

@@ -35,16 +35,13 @@ const EMPTY_SNAPSHOT = {
 };
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const [session, snapshotResult] = await Promise.all([
+    auth(),
+    getDashboardSnapshot().catch(() => EMPTY_SNAPSHOT),
+  ]);
   const user = session?.user;
   const isLoggedIn = Boolean(user?.profileId);
-
-  let snapshot = EMPTY_SNAPSHOT;
-  try {
-    snapshot = await getDashboardSnapshot();
-  } catch {
-    snapshot = EMPTY_SNAPSHOT;
-  }
+  const snapshot = snapshotResult;
 
   let cashBalance = user?.cashBalance ?? STARTING_CASH_IXD;
   let portfolioChart: { t: string; price: number }[] = [];

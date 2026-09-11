@@ -13,25 +13,65 @@ export async function computePriceChangePct(
   startingPrice: number,
   since: Date,
 ): Promise<number> {
-  const id =
-    typeof productId === "string" ? new Types.ObjectId(productId) : productId;
-
-  const anchor = await PriceHistory.findOne({
-    productId: id,
-    createdAt: { $gte: since },
-  })
-    .sort({ createdAt: 1 })
-    .select({ price: 1 })
-    .lean();
-
-  if (!anchor) {
+  const map = await batchAnchorPrices(
+    [
+      typeof productId === "string" ? new Types.ObjectId(productId) : productId,
+    ],
+    since,
+  );
+  const id = typeof productId === "string" ? productId : productId.toString();
+  const base = map.get(id);
+  if (base == null || base === 0) {
     return fallbackChangePct(currentPrice, startingPrice);
   }
-
-  const base = toNumberSafe(fromDecimal128(anchor.price));
-  if (base === 0) return fallbackChangePct(currentPrice, startingPrice);
-
   return ((currentPrice - base) / base) * 100;
+}
+
+/**
+ * Earliest PriceHistory price per product at/after `since` — one aggregation
+ * instead of N findOnes (critical for market/dashboard load time).
+ */
+export async function batchAnchorPrices(
+  productIds: Types.ObjectId[],
+  since: Date,
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (productIds.length === 0) return map;
+
+  const rows = await PriceHistory.aggregate<{
+    _id: Types.ObjectId;
+    price: unknown;
+  }>([
+    {
+      $match: {
+        productId: { $in: productIds },
+        createdAt: { $gte: since },
+      },
+    },
+    { $sort: { productId: 1, createdAt: 1 } },
+    {
+      $group: {
+        _id: "$productId",
+        price: { $first: "$price" },
+      },
+    },
+  ]);
+
+  for (const row of rows) {
+    map.set(row._id.toString(), toNumberSafe(fromDecimal128(row.price as never)));
+  }
+  return map;
+}
+
+export function changePctFromAnchor(
+  currentPrice: number,
+  startingPrice: number,
+  anchor: number | undefined,
+): number {
+  if (anchor == null || anchor === 0) {
+    return fallbackChangePct(currentPrice, startingPrice);
+  }
+  return ((currentPrice - anchor) / anchor) * 100;
 }
 
 /** MVP approximation when no price history is available. */
