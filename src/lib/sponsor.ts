@@ -1,6 +1,7 @@
 export const CONTACT_EMAIL = "contact@hypexchange.space";
 
 export const SPONSOR_STARTING_PRICE = 5;
+export const IPO_LAUNCH_PRICE = 10;
 
 /** Demo bids shown on the homepage sponsor slot. */
 export const SAMPLE_SPONSOR_BIDS = [
@@ -35,13 +36,13 @@ export const FOUNDER_OFFERS: {
       "Ideal for launches or promotions",
     ],
     cta: "Sponsor this spot",
-    href: "/sponsor/bid?offer=sponsor",
+    href: "/sponsor/bid",
   },
   {
     id: "ipo",
     title: "Featured IPO Launch",
     eyebrow: "Listing",
-    price: "$9–$19 one-time",
+    price: `$${IPO_LAUNCH_PRICE} one-time`,
     summary: "Launch your startup as an IPO on HypeXchange with promo placement.",
     perks: [
       "Dedicated market page with ticker/symbol",
@@ -50,7 +51,7 @@ export const FOUNDER_OFFERS: {
       "Shareable public market URL",
     ],
     cta: "Launch Your IPO",
-    href: "/sponsor/bid?offer=ipo",
+    href: "/sponsor/ipo",
   },
 ];
 

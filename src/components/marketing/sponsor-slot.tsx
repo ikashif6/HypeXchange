@@ -64,7 +64,7 @@ export function SponsorSlot({ className }: { className?: string }) {
 
         <div className="flex shrink-0 items-center gap-2">
           <Link
-            href="/sponsor/bid?offer=sponsor"
+            href="/sponsor/bid"
             className="btn-raised inline-flex h-8 items-center justify-center rounded-[8px] px-3 text-xs font-medium"
           >
             Place a Bid

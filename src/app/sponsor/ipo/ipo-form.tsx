@@ -11,14 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CONTACT_EMAIL, SPONSOR_STARTING_PRICE } from "@/lib/sponsor";
+import { CONTACT_EMAIL, IPO_LAUNCH_PRICE } from "@/lib/sponsor";
 
-export function SponsorBidForm() {
+export function IpoRequestForm() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
-  const [company, setCompany] = React.useState("");
-  const [amount, setAmount] = React.useState(String(SPONSOR_STARTING_PRICE + 1));
+  const [productName, setProductName] = React.useState("");
+  const [domain, setDomain] = React.useState("");
+  const [ticker, setTicker] = React.useState("");
   const [message, setMessage] = React.useState("");
   const [status, setStatus] = React.useState<"idle" | "sending" | "sent" | "error">(
     "idle",
@@ -27,43 +28,40 @@ export function SponsorBidForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const bidAmount = Number(amount);
-    if (!Number.isFinite(bidAmount) || bidAmount < SPONSOR_STARTING_PRICE) {
-      setError(`Minimum bid is $${SPONSOR_STARTING_PRICE}/day.`);
-      setStatus("error");
-      return;
-    }
-
     setStatus("sending");
     setError(null);
 
     try {
-      const res = await fetch("/api/sponsor/bid", {
+      const res = await fetch("/api/sponsor/ipo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim(),
-          company: company.trim(),
-          amount: bidAmount,
+          productName: productName.trim(),
+          domain: domain.trim(),
+          ticker: ticker.trim().toUpperCase(),
           message: message.trim(),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        throw new Error(data.error || "Could not send your bid.");
+        throw new Error(data.error || "Could not send your request.");
       }
       setStatus("sent");
       setName("");
       setEmail("");
       setPhone("");
-      setCompany("");
-      setAmount(String(SPONSOR_STARTING_PRICE + 1));
+      setProductName("");
+      setDomain("");
+      setTicker("");
       setMessage("");
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Could not send your bid.");
+      setError(
+        err instanceof Error ? err.message : "Could not send your request.",
+      );
     }
   }
 
@@ -71,16 +69,16 @@ export function SponsorBidForm() {
     return (
       <Card className="rounded-[14px]">
         <CardHeader className="border-b-0 px-5 pt-5 pb-2 sm:px-6">
-          <CardTitle className="text-lg">Bid sent</CardTitle>
+          <CardTitle className="text-lg">Request sent</CardTitle>
           <CardDescription className="text-sm leading-relaxed">
-            Thanks — your sponsor bid was forwarded to{" "}
+            Thanks — your IPO launch request was forwarded to{" "}
             <span className="font-medium text-hx-text">{CONTACT_EMAIL}</span>. We will
             follow up by email.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 px-5 pb-6 pt-3 sm:px-6">
           <Button type="button" variant="outline" onClick={() => setStatus("idle")}>
-            Send another bid
+            Send another request
           </Button>
           <Link
             href="/founders"
@@ -96,10 +94,10 @@ export function SponsorBidForm() {
   return (
     <Card className="rounded-[14px]">
       <CardHeader className="border-b-0 px-5 pt-5 pb-2 sm:px-6">
-        <CardTitle className="text-lg">Place a sponsor bid</CardTitle>
+        <CardTitle className="text-lg">Request a featured IPO</CardTitle>
         <CardDescription className="text-sm leading-relaxed">
-          Homepage sponsor slot. We email your details to {CONTACT_EMAIL}. Starting
-          bids are ${SPONSOR_STARTING_PRICE}/day.
+          Fixed ${IPO_LAUNCH_PRICE} one-time launch fee. We email your details to{" "}
+          {CONTACT_EMAIL}.
         </CardDescription>
       </CardHeader>
       <CardContent className="px-5 pb-6 pt-3 sm:px-6">
@@ -136,40 +134,58 @@ export function SponsorBidForm() {
             disabled={status === "sending"}
           />
           <Input
-            label="Company / product"
-            name="company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            placeholder="What are you promoting?"
+            label="Product name"
+            name="productName"
+            required
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            placeholder="Acme"
             disabled={status === "sending"}
           />
           <Input
-            label="Bid amount (USD / day)"
-            name="amount"
-            inputMode="decimal"
+            label="Domain / website"
+            name="domain"
             required
-            min={SPONSOR_STARTING_PRICE}
-            step="1"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            leftAddon="$"
-            hint={`Minimum $${SPONSOR_STARTING_PRICE}/day`}
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="acme.com"
             disabled={status === "sending"}
+          />
+          <Input
+            label="Suggested ticker"
+            name="ticker"
+            required
+            value={ticker}
+            onChange={(e) =>
+              setTicker(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))
+            }
+            placeholder="ACME"
+            hint="3–8 characters"
+            disabled={status === "sending"}
+          />
+          <Input
+            label="Launch fee"
+            name="price"
+            value={String(IPO_LAUNCH_PRICE)}
+            leftAddon="$"
+            hint="One-time featured IPO fee"
+            readOnly
+            disabled
           />
           <div className="flex flex-col gap-1.5">
             <label
-              htmlFor="bid-message"
+              htmlFor="ipo-message"
               className="text-xs font-medium text-hx-secondary"
             >
               Message
             </label>
             <textarea
-              id="bid-message"
+              id="ipo-message"
               name="message"
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Launch date, links, or anything we should know"
+              placeholder="Launch date, category, or anything we should know"
               disabled={status === "sending"}
               className="w-full rounded-[9px] border border-hx-border bg-hx-card px-3 py-2 text-sm text-hx-text outline-none placeholder:text-hx-muted focus:border-hx-primary focus:ring-2 focus:ring-hx-primary/20 disabled:opacity-60"
             />
@@ -187,7 +203,7 @@ export function SponsorBidForm() {
             className="mt-1 w-full"
             disabled={status === "sending"}
           >
-            {status === "sending" ? "Sending…" : "Submit bid"}
+            {status === "sending" ? "Sending…" : "Submit IPO request"}
           </Button>
         </form>
       </CardContent>

@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SponsorBidForm } from "@/app/sponsor/bid/bid-form";
-import { SPONSOR_STARTING_PRICE } from "@/lib/sponsor";
+import { IpoRequestForm } from "@/app/sponsor/ipo/ipo-form";
+import { IPO_LAUNCH_PRICE } from "@/lib/sponsor";
 
 export const metadata: Metadata = {
-  title: "Sponsor bid",
-  description: "Bid on the HypeXchange homepage sponsor slot.",
+  title: "Featured IPO launch",
+  description: "Request a featured IPO listing on HypeXchange.",
 };
 
-export default function SponsorBidPage() {
+export default function SponsorIpoPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-hx-muted">
-          Homepage sponsor
+          Featured IPO
         </p>
         <h1 className="text-xl font-semibold tracking-tight text-hx-text sm:text-2xl">
-          Bid on the sponsor slot
+          Launch as a featured IPO
         </h1>
         <p className="text-sm leading-relaxed text-hx-secondary">
-          Place a daily bid from ${SPONSOR_STARTING_PRICE}. Highest bids get the
-          homepage placement.{" "}
+          ${IPO_LAUNCH_PRICE} one-time for a dedicated market page and launch-day
+          placement.{" "}
           <Link href="/founders" className="font-medium text-hx-link hover:underline">
             View all founder offers
           </Link>
@@ -28,7 +28,7 @@ export default function SponsorBidPage() {
         </p>
       </div>
 
-      <SponsorBidForm />
+      <IpoRequestForm />
     </div>
   );
 }
