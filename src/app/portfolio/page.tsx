@@ -64,17 +64,17 @@ export default async function PortfolioPage() {
     }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-hx-text sm:text-2xl">
           Portfolio
         </h1>
-        <p className="text-sm text-hx-secondary">
+        <p className="mt-1 text-sm text-hx-secondary">
           Your fictional IXD cash and holdings. You cannot deposit or withdraw real money.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         <MetricCard label="Portfolio value" value={formatIxD(portfolioValue)} />
         <MetricCard label="Cash" value={formatIxD(cash)} />
         <MetricCard label="Holdings" value={formatIxD(holdingsValue)} />
@@ -86,15 +86,17 @@ export default async function PortfolioPage() {
         />
       </div>
 
-      <Card>
-        <CardHeader className="px-4 py-3">
-          <CardTitle>Holdings allocation</CardTitle>
-          <p className="text-xs text-hx-muted">Values by ticker (placeholder chart)</p>
-        </CardHeader>
-        <CardContent className="px-3 pb-3 pt-0">
-          <PriceChart data={chartData} height={240} />
-        </CardContent>
-      </Card>
+      {chartData.length > 0 ? (
+        <Card>
+          <CardHeader className="px-4 py-3">
+            <CardTitle>Holdings allocation</CardTitle>
+            <p className="text-xs text-hx-muted">Values by ticker</p>
+          </CardHeader>
+          <CardContent className="px-3 pb-3 pt-0">
+            <PriceChart data={chartData} height={200} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="px-4 py-3">
@@ -106,6 +108,7 @@ export default async function PortfolioPage() {
               title="No holdings yet"
               description="Buy fictional shares from the market to fill your portfolio."
               compact
+              className="py-6"
               action={
                 <Link
                   href="/market"
@@ -241,22 +244,26 @@ function MetricCard({
 }) {
   return (
     <Card>
-      <CardContent className="px-3 py-3 sm:px-4">
+      <CardContent className="flex h-full flex-col justify-center px-3 py-3 sm:px-4 sm:py-3.5">
         <p className="text-[11px] font-medium uppercase tracking-wide text-hx-muted">
           {label}
         </p>
-        <p
-          className={`mt-1 font-mono-num text-lg font-semibold sm:text-xl ${
-            tone === "positive"
-              ? "text-hx-positive"
-              : tone === "negative"
-                ? "text-hx-negative"
-                : "text-hx-text"
-          }`}
-        >
-          {value}
-        </p>
-        {sub ? <p className="mt-0.5 font-mono-num text-xs text-hx-muted">{sub}</p> : null}
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <p
+            className={`font-mono-num text-lg font-semibold leading-none sm:text-xl ${
+              tone === "positive"
+                ? "text-hx-positive"
+                : tone === "negative"
+                  ? "text-hx-negative"
+                  : "text-hx-text"
+            }`}
+          >
+            {value}
+          </p>
+          {sub ? (
+            <p className="font-mono-num text-xs leading-none text-hx-muted">{sub}</p>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   );

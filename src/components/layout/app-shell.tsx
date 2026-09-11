@@ -18,11 +18,11 @@ export function AppShell({
   hideFooter = false,
 }: AppShellProps) {
   return (
-    <div className={cn("flex min-h-dvh flex-1 flex-col bg-hx-bg", className)}>
+    <div className={cn("flex min-h-dvh flex-1 flex-col overflow-x-clip bg-hx-bg", className)}>
       <Header />
       <main
         className={cn(
-          "hx-container flex-1 py-4 md:py-6",
+          "hx-container min-w-0 flex-1 py-4 md:py-6",
           "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8",
           contentClassName,
         )}

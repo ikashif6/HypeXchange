@@ -1,8 +1,13 @@
 import { Types } from "mongoose";
 import { Decimal, d, toNumberSafe } from "@/lib/formatting/decimal";
 
+/** BSON Decimal128 cannot store arbitrary-length fraction strings from AMM math. */
+const DECIMAL128_PLACES = 12;
+
 export function toDecimal128(value: Decimal.Value): Types.Decimal128 {
-  const normalized = new Decimal(value).toFixed();
+  const normalized = new Decimal(value)
+    .toDecimalPlaces(DECIMAL128_PLACES, Decimal.ROUND_HALF_UP)
+    .toFixed();
   return Types.Decimal128.fromString(normalized);
 }
 

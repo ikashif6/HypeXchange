@@ -54,7 +54,7 @@ export function ActivityStrip({ trades, className }: ActivityStripProps) {
     return (
       <div
         className={cn(
-          "overflow-hidden rounded-[10px] border border-hx-border bg-hx-card px-4 py-2.5",
+          "w-full max-w-full overflow-hidden rounded-[10px] border border-hx-border bg-hx-card px-4 py-2.5",
           className,
         )}
       >
@@ -72,28 +72,30 @@ export function ActivityStrip({ trades, className }: ActivityStripProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[10px] border border-hx-border bg-hx-card",
+        "relative w-full max-w-full overflow-hidden rounded-[10px] border border-hx-border bg-hx-card",
         className,
       )}
       aria-label="Recent market activity"
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-hx-card to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-hx-card to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-hx-card to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-hx-card to-transparent" />
 
-      <div
-        className={cn(
-          "flex items-center gap-6 px-4 py-2.5",
-          animate && "hx-activity-marquee w-max",
-        )}
-      >
-        {items.map((trade, i) => (
-          <span key={`${trade.id}-${i}`} className="inline-flex items-center gap-6">
-            <TradeChip trade={trade} />
-            <span className="text-hx-border" aria-hidden>
-              ·
+      <div className="min-w-0 overflow-hidden">
+        <div
+          className={cn(
+            "flex w-max items-center gap-6 px-5 py-2.5",
+            animate && "hx-activity-marquee",
+          )}
+        >
+          {items.map((trade, i) => (
+            <span key={`${trade.id}-${i}`} className="inline-flex items-center gap-6">
+              <TradeChip trade={trade} />
+              <span className="text-hx-border" aria-hidden>
+                ·
+              </span>
             </span>
-          </span>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { CheckCircle2, X } from "lucide-react";
 import type {
   BuyTradeResult,
@@ -49,6 +50,7 @@ export function TradePanel({
   onTradeComplete,
 }: TradePanelProps) {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [side, setSide] = React.useState<Side>("buy");
   const [amount, setAmount] = React.useState("");
   const [estimate, setEstimate] = React.useState<EstimateResponse | null>(null);
@@ -171,7 +173,17 @@ export function TradePanel({
       setSuccess(data as BuyTradeResult | SellTradeResult);
       setAmount("");
       setEstimate(null);
+      const nextCash =
+        "newCashBalance" in data && typeof data.newCashBalance === "number"
+          ? data.newCashBalance
+          : null;
+      if (nextCash != null) {
+        window.dispatchEvent(
+          new CustomEvent("hx:cash", { detail: { cash: nextCash } }),
+        );
+      }
       onTradeComplete?.();
+      await updateSession();
       router.refresh();
     } catch {
       setError("Trade failed. Please try again.");
@@ -327,10 +339,6 @@ export function TradePanel({
               {side === "buy" ? `Buy $${product.ticker}` : `Sell $${product.ticker}`}
             </Button>
           )}
-
-          <p className="text-center text-[10px] leading-relaxed text-hx-muted">
-            This is a fictional market with no real ownership.
-          </p>
         </CardContent>
       </Card>
 

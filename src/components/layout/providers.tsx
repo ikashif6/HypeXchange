@@ -11,7 +11,9 @@ export interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider>
-      <SessionProvider>{children}</SessionProvider>
+      <SessionProvider refetchOnWindowFocus refetchInterval={60}>
+        {children}
+      </SessionProvider>
     </ThemeProvider>
   );
 }

@@ -143,10 +143,10 @@ export function PriceChart({
         <AreaChart
           data={chartData}
           margin={{
-            top: 12,
-            right: 12,
-            left: 4,
-            bottom: showAxes ? 8 : 4,
+            top: 16,
+            right: 16,
+            left: 8,
+            bottom: showAxes ? 12 : 4,
           }}
         >
           <defs>
@@ -169,13 +169,16 @@ export function PriceChart({
                 axisLine={false}
                 minTickGap={48}
                 tick={{ fill: colors.muted, fontSize: 11 }}
-                dy={6}
+                tickMargin={10}
+                dy={4}
               />
               <YAxis
-                width={52}
+                width={68}
                 tickLine={false}
                 axisLine={false}
+                tickMargin={10}
                 domain={["auto", "auto"]}
+                padding={{ top: 12, bottom: 12 }}
                 tick={{ fill: colors.muted, fontSize: 11 }}
                 tickFormatter={(v: number) => `$${formatPrice(v, 2)}`}
               />
@@ -220,7 +223,7 @@ export function PriceChart({
           {periodControls}
         </div>
       ) : null}
-      <div className="px-2 pt-1 pb-2">{body}</div>
+      <div className="px-3 pt-2 pb-3">{body}</div>
     </div>
   );
 }

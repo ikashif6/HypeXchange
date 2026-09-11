@@ -22,7 +22,6 @@ import { ProductLogo } from "@/components/product/product-logo";
 import { ChangeBadge } from "@/components/product/change-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { WelcomeBanner } from "@/app/_components/welcome-banner";
 import type { ProductPublic, TradePublic } from "@/types";
 import { STARTING_CASH_IXD } from "@/types";
 
@@ -90,10 +89,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {isLoggedIn && user && !user.welcomeSeen ? (
-        <WelcomeBanner displayName={user.displayName ?? user.username} />
-      ) : null}
-
       <ActivityStrip trades={snapshot.recentActivity} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

@@ -14,14 +14,22 @@ export function toNumberSafe(value: Decimal.Value, digits = 8): number {
 
 export function formatIxD(
   value: Decimal.Value,
-  options?: { compact?: boolean; digits?: number; prefix?: boolean },
+  options?: {
+    compact?: boolean;
+    digits?: number;
+    prefix?: boolean;
+    /** When false, omit the trailing " IXD" (default true). */
+    unit?: boolean;
+  },
 ): string {
   const amount = new Decimal(value);
   const digits = options?.digits ?? 2;
+  const withUnit = options?.unit !== false;
 
   if (options?.compact && amount.abs().gte(1_000_000)) {
     const compact = amount.div(1_000_000).toDecimalPlaces(2).toString();
-    return options.prefix ? `$${compact}M` : `${compact}M IXD`;
+    if (options.prefix) return `$${compact}M`;
+    return withUnit ? `${compact}M IXD` : `${compact}M`;
   }
 
   const formatted = amount.toNumber().toLocaleString("en-US", {
@@ -30,7 +38,7 @@ export function formatIxD(
   });
 
   if (options?.prefix) return `$${formatted}`;
-  return `${formatted} IXD`;
+  return withUnit ? `${formatted} IXD` : formatted;
 }
 
 export function formatPrice(value: Decimal.Value, digits = 2): string {

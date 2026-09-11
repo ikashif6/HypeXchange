@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Activity, Bookmark, LayoutGrid, Wallet } from "lucide-react";
+import { Bookmark, LayoutGrid, Wallet } from "lucide-react";
 import { formatIxD } from "@/lib/formatting/decimal";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,8 +29,8 @@ export function BalanceCard({
             </p>
             <p className="mt-1 text-xs text-hx-secondary">Available Cash</p>
           </div>
-          <div className="flex size-9 items-center justify-center rounded-[9px] bg-hx-primary-subtle text-hx-primary">
-            <Wallet className="size-4" aria-hidden />
+          <div className="flex size-9 items-center justify-center rounded-[9px] border border-hx-primary/25 bg-hx-primary-soft text-hx-link dark:border-hx-link/30 dark:bg-hx-link/15 dark:text-hx-link">
+            <Wallet className="size-4" strokeWidth={2.25} aria-hidden />
           </div>
         </div>
 
@@ -41,10 +41,9 @@ export function BalanceCard({
           Explore Market
         </Link>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <QuickLink href="/portfolio" icon={<LayoutGrid className="size-3.5" />} label="Portfolio" />
           <QuickLink href="/watchlist" icon={<Bookmark className="size-3.5" />} label="Watchlist" />
-          <QuickLink href="/" icon={<Activity className="size-3.5" />} label="Activity" />
         </div>
       </CardContent>
     </Card>

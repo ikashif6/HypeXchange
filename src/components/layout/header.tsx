@@ -69,107 +69,122 @@ export function Header() {
   useBodyScrollLock(menuOpen);
 
   const user = session?.user;
-  const cash = user?.cashBalance ?? 0;
+  const [cash, setCash] = React.useState(() => user?.cashBalance ?? 0);
+
+  React.useEffect(() => {
+    if (typeof user?.cashBalance === "number") {
+      setCash(user.cashBalance);
+    }
+  }, [user?.cashBalance]);
+
+  React.useEffect(() => {
+    function onCash(e: Event) {
+      const value = (e as CustomEvent<{ cash?: number }>).detail?.cash;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        setCash(value);
+      }
+    }
+    window.addEventListener("hx:cash", onCash);
+    return () => window.removeEventListener("hx:cash", onCash);
+  }, []);
 
   return (
     <>
       <header className="z-40 border-b border-hx-border bg-hx-card/95 backdrop-blur-[2px]">
-        <div className="hx-container flex h-14 items-center gap-2 sm:gap-3">
-          <BrandLogo className="shrink-0" priority />
+        <div className="hx-container">
+          <div className="flex h-14 w-full min-w-0 items-center gap-1.5 sm:gap-2">
+            <BrandLogo className="shrink-0" priority />
 
-          {/* Desktop / laptop nav: visible on PC */}
-          <nav className="ml-4 hidden items-center gap-0.5 md:ml-6 md:flex lg:ml-8">
-            {NAV.map((item) => {
-              const active =
-                item.href === "/"
-                  ? pathname === "/" || pathname === "/dashboard"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "rounded-[8px] px-2 py-1.5 text-sm font-medium transition-colors lg:px-2.5",
-                    active
-                      ? "bg-hx-bg text-hx-text"
-                      : "text-hx-secondary hover:bg-hx-bg hover:text-hx-text",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+            {/* Desktop / laptop nav: visible on PC */}
+            <nav className="ml-3 hidden min-w-0 items-center gap-0.5 md:ml-5 md:flex lg:ml-6">
+              {NAV.map((item) => {
+                const active =
+                  item.href === "/"
+                    ? pathname === "/" || pathname === "/dashboard"
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "rounded-[8px] px-2 py-1.5 text-sm font-medium transition-colors lg:px-2.5",
+                      active
+                        ? "bg-hx-bg text-hx-text"
+                        : "text-hx-secondary hover:bg-hx-bg hover:text-hx-text",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
 
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="mx-auto hidden h-9 w-full max-w-md items-center gap-2 rounded-[9px] border border-hx-border bg-hx-bg px-3 text-left text-sm text-hx-muted transition-colors hover:border-hx-primary/30 lg:flex"
-          >
-            <Search className="size-3.5 shrink-0" aria-hidden />
-            <span className="flex-1 truncate">Search products…</span>
-            <kbd className="rounded border border-hx-border bg-hx-card px-1.5 py-0.5 font-mono text-[10px] text-hx-muted">
-              /
-            </kbd>
-          </button>
-
-          <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="hx-icon-btn hidden md:inline-flex lg:hidden"
-              aria-label="Search"
+              className="ml-3 hidden h-9 min-w-0 max-w-[11rem] flex-1 items-center gap-2 rounded-[9px] border border-hx-border bg-hx-bg px-2.5 text-left text-sm text-hx-muted transition-colors hover:border-hx-primary/30 lg:flex xl:max-w-[14rem]"
             >
-              <Search className="size-4" />
+              <Search className="size-3.5 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">Search products…</span>
+              <kbd className="shrink-0 rounded border border-hx-border bg-hx-card px-1.5 py-0.5 font-mono text-[10px] text-hx-muted">
+                /
+              </kbd>
             </button>
 
-            <Link
-              href="/founders"
-              className="hidden h-9 shrink-0 items-center rounded-[9px] border border-hx-border bg-hx-card px-3 text-xs font-medium text-hx-text hover:bg-hx-bg sm:inline-flex"
-            >
-              Visit founders page
-            </Link>
+            <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="hx-icon-btn hidden md:inline-flex lg:hidden"
+                aria-label="Search"
+              >
+                <Search className="size-4" />
+              </button>
 
-            <span className="hidden md:inline-flex">
-              <ThemeToggle variant="icon" />
-            </span>
+              <Link
+                href="/founders"
+                className="hidden h-9 shrink-0 items-center rounded-[9px] border border-hx-border bg-hx-card px-3 text-xs font-medium text-hx-text hover:bg-hx-bg lg:inline-flex"
+              >
+                Visit founders page
+              </Link>
 
-            <Link
-              href="/watchlist"
-              className="hx-icon-btn inline-flex"
-              aria-label="Watchlist"
-            >
-              <Bookmark className="size-4" />
-            </Link>
+              <span className="hidden md:inline-flex">
+                <ThemeToggle variant="icon" />
+              </span>
 
-            {status === "authenticated" && user ? (
-              <>
-                <Link
-                  href="/portfolio"
-                  className="hidden rounded-[9px] border border-hx-border bg-hx-bg px-2.5 py-1.5 font-mono-num text-xs font-medium text-hx-text sm:inline-flex"
-                >
-                  {formatIxD(cash, { digits: 2 })}
-                </Link>
+              <Link
+                href="/watchlist"
+                className="hx-icon-btn hidden sm:inline-flex"
+                aria-label="Watchlist"
+              >
+                <Bookmark className="size-4" />
+              </Link>
 
-                <div className="relative" ref={avatarRef}>
+              {status === "authenticated" && user ? (
+                <div className="relative shrink-0" ref={avatarRef}>
                   <button
                     type="button"
                     onClick={() => setAvatarOpen((v) => !v)}
-                    className="inline-flex items-center gap-1 rounded-[9px] p-0.5 hover:bg-hx-bg"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-[9px] border border-hx-border bg-hx-bg py-1 pl-2.5 pr-1.5 hover:bg-hx-card"
                     aria-expanded={avatarOpen}
                     aria-haspopup="menu"
                   >
+                    <span className="whitespace-nowrap font-mono-num text-xs font-medium tabular-nums text-hx-text">
+                      {formatIxD(cash, { digits: 2 })}
+                    </span>
+                    <span className="h-4 w-px shrink-0 bg-hx-border" aria-hidden />
                     {user.username ? (
                       <UserAvatar
                         username={user.username}
                         displayName={user.displayName ?? user.name ?? undefined}
                         avatarUrl={user.avatarUrl}
                         size="sm"
+                        className="size-7"
                       />
                     ) : (
-                      <span className="inline-flex size-8 items-center justify-center rounded-full border border-hx-border bg-hx-bg text-hx-muted" />
+                      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-hx-border bg-hx-card text-hx-muted" />
                     )}
-                    <ChevronDown className="hidden size-3.5 text-hx-muted sm:block" />
+                    <ChevronDown className="hidden size-3.5 shrink-0 text-hx-muted md:block" />
                   </button>
 
                   {avatarOpen ? (
@@ -183,6 +198,9 @@ export function Header() {
                         </p>
                         <p className="truncate text-[11px] text-hx-muted">
                           @{user.username ?? "user"}
+                        </p>
+                        <p className="mt-1 font-mono-num text-[11px] text-hx-secondary">
+                          {formatIxD(cash, { digits: 2 })}
                         </p>
                       </div>
                       <Link
@@ -199,6 +217,13 @@ export function Header() {
                       >
                         Profile
                       </Link>
+                      <Link
+                        href="/watchlist"
+                        className="block px-3 py-2 text-sm text-hx-secondary hover:bg-hx-bg hover:text-hx-text sm:hidden"
+                        role="menuitem"
+                      >
+                        Watchlist
+                      </Link>
                       <button
                         type="button"
                         role="menuitem"
@@ -211,26 +236,26 @@ export function Header() {
                     </div>
                   ) : null}
                 </div>
-              </>
-            ) : (
-              <Link
-                href="/auth/signin"
-                className="btn-raised inline-flex h-9 shrink-0 items-center rounded-[9px] px-3.5 text-sm font-medium"
-              >
-                Sign in
-              </Link>
-            )}
+              ) : (
+                <Link
+                  href="/auth/signin"
+                  className="btn-raised inline-flex h-9 shrink-0 items-center rounded-[9px] px-3.5 text-sm font-medium"
+                >
+                  Sign in
+                </Link>
+              )}
 
-            <button
-              type="button"
-              className="hx-icon-btn inline-flex md:hidden"
-              onClick={() => setMenuOpen(true)}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-nav-sidebar"
-              aria-label="Open menu"
-            >
-              <Menu className="size-4" />
-            </button>
+              <button
+                type="button"
+                className="hx-icon-btn inline-flex md:hidden"
+                onClick={() => setMenuOpen(true)}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-nav-sidebar"
+                aria-label="Open menu"
+              >
+                <Menu className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       </header>

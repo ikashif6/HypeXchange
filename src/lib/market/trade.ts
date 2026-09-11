@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { connectMongo } from "@/lib/mongodb/mongoose";
 import { applyBuy, applySell, estimateBuy, estimateSell } from "@/lib/market/amm";
 import {
@@ -16,37 +15,22 @@ function isRetryable(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const e = error as { code?: number; codeName?: string; errorLabels?: string[]; message?: string };
   if (e.errorLabels?.includes("TransientTransactionError")) return true;
-  if (e.errorLabels?.includes("UnknownTransactionCommitResult")) return true;
   if (e.codeName === "WriteConflict" || e.code === 112) return true;
   if (typeof e.message === "string" && e.message.includes("Write conflict")) return true;
   return false;
 }
 
-async function withTransactionRetry<T>(fn: (session: mongoose.ClientSession) => Promise<T>): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   await connectMongo();
   let lastError: unknown;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const session = await mongoose.startSession();
     try {
-      let result!: T;
-      await session.withTransaction(
-        async () => {
-          result = await fn(session);
-        },
-        {
-          readConcern: { level: "snapshot" },
-          writeConcern: { w: "majority" },
-          readPreference: "primary",
-        },
-      );
-      return result;
+      return await fn();
     } catch (error) {
       lastError = error;
       if (!isRetryable(error) || attempt === MAX_RETRIES - 1) throw error;
       await new Promise((r) => setTimeout(r, 40 * (attempt + 1)));
-    } finally {
-      session.endSession();
     }
   }
 
@@ -93,11 +77,11 @@ export async function executeBuyTrade(params: {
     throw new Error("Enter an amount greater than zero.");
   }
 
-  return withTransactionRetry(async (session) => {
-    const profile = await Profile.findById(params.profileId).session(session);
+  return withRetry(async () => {
+    const profile = await Profile.findById(params.profileId);
     if (!profile) throw new Error("Profile not found");
 
-    const product = await Product.findById(params.productId).session(session);
+    const product = await Product.findById(params.productId);
     if (!product) throw new Error("Product not found");
     if (product.status !== "active") throw new Error("Trading is paused for this product.");
 
@@ -115,7 +99,7 @@ export async function executeBuyTrade(params: {
     );
 
     profile.cashBalance = toDecimal128(cashBalance.minus(amount));
-    await profile.save({ session });
+    await profile.save();
 
     product.cashReserve = toDecimal128(result.newCashReserve);
     product.shareReserve = toDecimal128(result.newShareReserve);
@@ -124,12 +108,11 @@ export async function executeBuyTrade(params: {
     if (result.priceAfter.gt(fromDecimal128(product.allTimeHigh))) {
       product.allTimeHigh = toDecimal128(result.priceAfter);
     }
-    await product.save({ session });
 
     let holding = await Holding.findOne({
       userId: profile._id,
       productId: product._id,
-    }).session(session);
+    });
 
     const prevShares = holding ? fromDecimal128(holding.shares) : d(0);
     const prevAvg = holding ? fromDecimal128(holding.averageCost) : d(0);
@@ -151,40 +134,30 @@ export async function executeBuyTrade(params: {
       holding.shares = toDecimal128(newShares);
       holding.averageCost = toDecimal128(newAvg);
     }
-    await holding.save({ session });
+    await holding.save();
 
     if (wasNewHolder) {
       product.holdersCount = (product.holdersCount ?? 0) + 1;
-      await product.save({ session });
     }
+    await product.save();
 
-    await Trade.create(
-      [
-        {
-          userId: profile._id,
-          productId: product._id,
-          side: "buy",
-          cashAmount: toDecimal128(amount),
-          shares: toDecimal128(result.sharesReceived),
-          priceBefore: toDecimal128(result.priceBefore),
-          priceAfter: toDecimal128(result.priceAfter),
-          fee: toDecimal128(result.fee),
-          realizedPnl: toDecimal128(0),
-        },
-      ],
-      { session },
-    );
+    await Trade.create({
+      userId: profile._id,
+      productId: product._id,
+      side: "buy",
+      cashAmount: toDecimal128(amount),
+      shares: toDecimal128(result.sharesReceived),
+      priceBefore: toDecimal128(result.priceBefore),
+      priceAfter: toDecimal128(result.priceAfter),
+      fee: toDecimal128(result.fee),
+      realizedPnl: toDecimal128(0),
+    });
 
-    await PriceHistory.create(
-      [
-        {
-          productId: product._id,
-          price: toDecimal128(result.priceAfter),
-          volume: toDecimal128(amount),
-        },
-      ],
-      { session },
-    );
+    await PriceHistory.create({
+      productId: product._id,
+      price: toDecimal128(result.priceAfter),
+      volume: toDecimal128(amount),
+    });
 
     return {
       ok: true as const,
@@ -210,18 +183,18 @@ export async function executeSellTrade(params: {
     throw new Error("Enter shares greater than zero.");
   }
 
-  return withTransactionRetry(async (session) => {
-    const profile = await Profile.findById(params.profileId).session(session);
+  return withRetry(async () => {
+    const profile = await Profile.findById(params.profileId);
     if (!profile) throw new Error("Profile not found");
 
-    const product = await Product.findById(params.productId).session(session);
+    const product = await Product.findById(params.productId);
     if (!product) throw new Error("Product not found");
     if (product.status !== "active") throw new Error("Trading is paused for this product.");
 
     const holding = await Holding.findOne({
       userId: profile._id,
       productId: product._id,
-    }).session(session);
+    });
 
     if (!holding) throw new Error("You do not own any shares of this product.");
 
@@ -243,51 +216,40 @@ export async function executeSellTrade(params: {
     const realizedPnl = result.netPayout.minus(costBasis);
 
     profile.cashBalance = toDecimal128(fromDecimal128(profile.cashBalance).plus(result.netPayout));
-    await profile.save({ session });
+    await profile.save();
 
     product.cashReserve = toDecimal128(result.newCashReserve);
     product.shareReserve = toDecimal128(result.newShareReserve);
     product.currentPrice = toDecimal128(result.priceAfter);
     product.volume24h = toDecimal128(fromDecimal128(product.volume24h).plus(result.grossPayout));
-    await product.save({ session });
 
     const remaining = owned.minus(sharesToSell);
     if (remaining.lte(0)) {
-      await holding.deleteOne({ session });
+      await holding.deleteOne();
       product.holdersCount = Math.max(0, (product.holdersCount ?? 1) - 1);
-      await product.save({ session });
     } else {
       holding.shares = toDecimal128(remaining);
-      await holding.save({ session });
+      await holding.save();
     }
+    await product.save();
 
-    await Trade.create(
-      [
-        {
-          userId: profile._id,
-          productId: product._id,
-          side: "sell",
-          cashAmount: toDecimal128(result.netPayout),
-          shares: toDecimal128(sharesToSell),
-          priceBefore: toDecimal128(result.priceBefore),
-          priceAfter: toDecimal128(result.priceAfter),
-          fee: toDecimal128(result.fee),
-          realizedPnl: toDecimal128(realizedPnl),
-        },
-      ],
-      { session },
-    );
+    await Trade.create({
+      userId: profile._id,
+      productId: product._id,
+      side: "sell",
+      cashAmount: toDecimal128(result.netPayout),
+      shares: toDecimal128(sharesToSell),
+      priceBefore: toDecimal128(result.priceBefore),
+      priceAfter: toDecimal128(result.priceAfter),
+      fee: toDecimal128(result.fee),
+      realizedPnl: toDecimal128(realizedPnl),
+    });
 
-    await PriceHistory.create(
-      [
-        {
-          productId: product._id,
-          price: toDecimal128(result.priceAfter),
-          volume: toDecimal128(result.grossPayout),
-        },
-      ],
-      { session },
-    );
+    await PriceHistory.create({
+      productId: product._id,
+      price: toDecimal128(result.priceAfter),
+      volume: toDecimal128(result.grossPayout),
+    });
 
     return {
       ok: true as const,
