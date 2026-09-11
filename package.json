@@ -1,0 +1,41 @@
+{
+  "name": "hypexchange",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "tsx scripts/seed.ts",
+    "seed:demo": "tsx scripts/seed.ts --demo"
+  },
+  "dependencies": {
+    "@auth/mongodb-adapter": "^3.11.3",
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^17.4.2",
+    "geist": "^1.7.2",
+    "lucide-react": "^1.44.0",
+    "mongodb": "^6.21.0",
+    "mongoose": "^9.10.0",
+    "next": "16.3.4",
+    "next-auth": "^5.0.0-beta.32",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "resend": "^6.27.0",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  }
+}

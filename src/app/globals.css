@@ -1,0 +1,458 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --hx-primary: #240bcd;
+  --hx-primary-hover: #1d08ad;
+  --hx-primary-subtle: #f1efff;
+  --hx-primary-soft: #e4e0ff;
+  --hx-text: #111217;
+  --hx-text-secondary: #62656f;
+  --hx-muted: #91949d;
+  --hx-bg: #f1f2f4;
+  --hx-card: #ffffff;
+  --hx-border: #e6e7ea;
+  --hx-positive: #14a673;
+  --hx-positive-subtle: #e8f8f1;
+  --hx-negative: #e5484d;
+  --hx-negative-subtle: #fdeeee;
+  --hx-warning: #e9a23b;
+  --hx-logo-tile: #e8eaed;
+  --hx-overlay: rgb(17 18 23 / 0.4);
+  --hx-chart-grid: #e6e7ea;
+  --hx-skeleton-a: #ececef;
+  --hx-skeleton-b: #f6f6f8;
+  --hx-link: #240bcd;
+  --background: var(--hx-bg);
+  --foreground: var(--hx-text);
+  color-scheme: light;
+}
+
+.dark {
+  /*
+   * Neutral zinc canvas (like light mode’s gray/white) so brand blue
+   * reads as an accent again. Navy-black was too close to #240BCD and
+   * made primary feel muddy.
+   */
+  --hx-primary: #240bcd;
+  --hx-primary-hover: #1d08ad;
+  --hx-primary-subtle: #1c1835;
+  --hx-primary-soft: #25204a;
+  --hx-text: #f4f4f5;
+  --hx-text-secondary: #a1a1aa;
+  --hx-muted: #71717a;
+  --hx-bg: #09090b;
+  --hx-card: #18181b;
+  --hx-border: #27272a;
+  --hx-positive: #34d399;
+  --hx-positive-subtle: #052e24;
+  --hx-negative: #fb7185;
+  --hx-negative-subtle: #3f1219;
+  --hx-warning: #fbbf24;
+  --hx-logo-tile: #27272a;
+  --hx-overlay: rgb(0 0 0 / 0.6);
+  --hx-chart-grid: #27272a;
+  --hx-skeleton-a: #1c1c1f;
+  --hx-skeleton-b: #27272a;
+  /* Readable on dark surfaces — primary blue is too dark for text/hovers */
+  --hx-link: #a8b0ff;
+  --background: var(--hx-bg);
+  --foreground: var(--hx-text);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-hx-primary: var(--hx-primary);
+  --color-hx-primary-hover: var(--hx-primary-hover);
+  --color-hx-primary-subtle: var(--hx-primary-subtle);
+  --color-hx-primary-soft: var(--hx-primary-soft);
+  --color-hx-text: var(--hx-text);
+  --color-hx-secondary: var(--hx-text-secondary);
+  --color-hx-muted: var(--hx-muted);
+  --color-hx-bg: var(--hx-bg);
+  --color-hx-card: var(--hx-card);
+  --color-hx-border: var(--hx-border);
+  --color-hx-positive: var(--hx-positive);
+  --color-hx-positive-subtle: var(--hx-positive-subtle);
+  --color-hx-negative: var(--hx-negative);
+  --color-hx-negative-subtle: var(--hx-negative-subtle);
+  --color-hx-warning: var(--hx-warning);
+  --color-hx-logo-tile: var(--hx-logo-tile);
+  --color-hx-overlay: var(--hx-overlay);
+  --color-hx-link: var(--hx-link);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-card: 10px;
+  --radius-btn: 9px;
+}
+
+* {
+  border-color: var(--hx-border);
+}
+
+body {
+  background: var(--hx-bg);
+  color: var(--hx-text);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, theme-aware scrollbars (Firefox + Chromium/Safari) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--hx-muted) 55%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--hx-muted) 45%, transparent);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--hx-muted) 70%, transparent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.overscroll-contain,
+[data-overscroll-contain] {
+  overscroll-behavior: contain;
+}
+
+/* Auth screens — subtle bubble mosaic behind the form (Reddit-style) */
+.hx-auth-pattern {
+  background-color: var(--hx-bg);
+  background-image:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      color-mix(in srgb, var(--hx-bg) 35%, transparent),
+      var(--hx-bg)
+    ),
+    url("/brand/auth-pattern.svg");
+  background-size: auto, 300px 300px;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, repeat;
+  opacity: 0.55;
+}
+
+.dark .hx-auth-pattern {
+  opacity: 0.35;
+}
+
+/* Hand cursor on interactive controls (Tailwind preflight uses arrow on buttons) */
+a[href],
+button:not(:disabled):not([disabled]),
+[role="button"]:not([aria-disabled="true"]),
+[type="button"]:not(:disabled):not([disabled]),
+[type="submit"]:not(:disabled):not([disabled]),
+[type="reset"]:not(:disabled):not([disabled]),
+summary,
+select:not(:disabled),
+label[for],
+.hx-chip:not(:disabled):not([aria-disabled="true"]),
+.hx-icon-btn:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+button[disabled],
+[aria-disabled="true"],
+.hx-chip:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--hx-primary) 28%, transparent);
+}
+
+.font-mono-num {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.hx-card {
+  background: var(--hx-card);
+  border: 1px solid var(--hx-border);
+  border-radius: var(--radius-card);
+}
+
+.hx-container {
+  width: 100%;
+  max-width: 1520px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .hx-container {
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hx-container {
+    padding-inline: 1.75rem;
+  }
+}
+
+/* Shared header icon control — soft square chip (not a circle) */
+.hx-icon-btn {
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  background: var(--hx-bg);
+  color: var(--hx-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.hx-icon-btn:hover {
+  background: color-mix(in srgb, var(--hx-bg) 65%, var(--hx-border));
+  color: var(--hx-text);
+}
+
+.dark .hx-icon-btn {
+  background: color-mix(in srgb, var(--hx-card) 72%, var(--hx-bg));
+}
+
+.dark .hx-icon-btn:hover {
+  background: color-mix(in srgb, var(--hx-border) 55%, var(--hx-card));
+}
+
+@keyframes hx-activity-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.hx-activity-marquee {
+  animation: hx-activity-marquee 42s linear infinite;
+}
+
+.hx-activity-marquee:hover {
+  animation-play-state: paused;
+}
+
+/*
+ * Raised primary CTA — from Agentra (Cloudflare / Shopify style depth):
+ * top inset highlight + darker bottom edge + soft outer shadow.
+ */
+.btn-raised {
+  border: 1px solid color-mix(in srgb, var(--hx-primary) 72%, #000) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hx-primary) 86%, white) 0%,
+    var(--hx-primary) 55%,
+    color-mix(in srgb, var(--hx-primary) 86%, black) 100%
+  ) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 10%, transparent);
+  text-shadow: none;
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 120ms ease,
+    filter 150ms ease;
+}
+
+.btn-raised:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hx-primary-hover) 88%, white) 0%,
+    var(--hx-primary-hover) 55%,
+    color-mix(in srgb, var(--hx-primary-hover) 88%, black) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 10%, transparent);
+  filter: none;
+}
+
+.btn-raised:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(0.5px);
+  background: linear-gradient(
+    180deg,
+    var(--hx-primary) 0%,
+    color-mix(in srgb, var(--hx-primary) 82%, black) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.1),
+    0 0 0 transparent;
+}
+
+.btn-raised:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 10%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--hx-primary) 22%, transparent);
+}
+
+.btn-raised:disabled,
+.btn-raised[disabled],
+.btn-raised[aria-disabled="true"] {
+  opacity: 0.5;
+  transform: none;
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 transparent;
+}
+
+/* Dark: keep brand blue — don’t mix with white (that turns hover purple/lavender) */
+.dark .btn-raised {
+  border: 1px solid color-mix(in srgb, var(--hx-primary) 78%, #000) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hx-primary) 90%, #4f7fff) 0%,
+    var(--hx-primary) 52%,
+    color-mix(in srgb, var(--hx-primary) 86%, black) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 16%, transparent);
+}
+
+.dark .btn-raised:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hx-primary-hover) 88%, #4f7fff) 0%,
+    var(--hx-primary-hover) 55%,
+    color-mix(in srgb, var(--hx-primary-hover) 84%, black) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 14%, transparent);
+}
+
+.dark .btn-raised:active:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(
+    180deg,
+    var(--hx-primary-hover) 0%,
+    color-mix(in srgb, var(--hx-primary-hover) 80%, black) 100%
+  ) !important;
+}
+
+.dark .btn-raised:focus-visible {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 1px 1px color-mix(in srgb, var(--hx-primary) 16%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--hx-primary) 28%, transparent);
+}
+
+/* Filter / quick-action chips — solid selected, neutral hover (no purple wash) */
+.hx-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding-inline: 0.625rem;
+  border-radius: 7px;
+  border: 1px solid var(--hx-border);
+  background: var(--hx-card);
+  color: var(--hx-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.hx-chip:hover {
+  background: var(--hx-bg);
+  border-color: color-mix(in srgb, var(--hx-text) 16%, var(--hx-border));
+  color: var(--hx-text);
+}
+
+.hx-chip-active,
+.hx-chip[aria-pressed="true"],
+.hx-chip[data-active="true"] {
+  background: var(--hx-primary);
+  border-color: var(--hx-primary);
+  color: #fff;
+}
+
+.hx-chip-active:hover,
+.hx-chip[aria-pressed="true"]:hover,
+.hx-chip[data-active="true"]:hover {
+  background: var(--hx-primary-hover);
+  border-color: var(--hx-primary-hover);
+  color: #fff;
+}
+
+.hx-chip:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.hx-chip-sm {
+  height: 1.75rem;
+  padding-inline: 0.625rem;
+  font-size: 11px;
+}
+
+@keyframes price-flash-up {
+  0% { background-color: color-mix(in srgb, var(--hx-positive) 28%, transparent); }
+  100% { background-color: transparent; }
+}
+
+@keyframes price-flash-down {
+  0% { background-color: color-mix(in srgb, var(--hx-negative) 28%, transparent); }
+  100% { background-color: transparent; }
+}
+
+.flash-up { animation: price-flash-up 0.7s ease-out; }
+.flash-down { animation: price-flash-down 0.7s ease-out; }
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--hx-skeleton-a) 25%,
+    var(--hx-skeleton-b) 50%,
+    var(--hx-skeleton-a) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,42 @@
+import { MongoClient, ServerApiVersion } from "mongodb";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
+}
+
+const options = {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+};
+
+function getClientPromise(): Promise<MongoClient> {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return Promise.reject(new Error("Missing MONGODB_URI environment variable"));
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    if (!global._mongoClientPromise) {
+      const client = new MongoClient(uri, options);
+      global._mongoClientPromise = client.connect();
+    }
+    return global._mongoClientPromise;
+  }
+
+  const client = new MongoClient(uri, options);
+  return client.connect();
+}
+
+const clientPromise = new Proxy({} as Promise<MongoClient>, {
+  get(_target, prop) {
+    const promise = getClientPromise();
+    const value = Reflect.get(promise, prop, promise);
+    return typeof value === "function" ? value.bind(promise) : value;
+  },
+});
+
+export default clientPromise;
